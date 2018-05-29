@@ -1,0 +1,4 @@
+{
+  "ignore": ["dist/public/*","dist/views/*","src/*"],
+  "delay": "500"
+}

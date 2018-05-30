@@ -1,5 +1,6 @@
 import Market from '../index';
-Market.server({
+Market({
+	subscribe : true,
 	// mongoose connection string
 	mongo : "mongodb://test_user:test_password@127.0.0.1:27017/test_db",
 	//
@@ -8,14 +9,14 @@ Market.server({
 		port : 6379,
 		password : "test_redis_password"
 	},
-	markets : {
-//		'BCHM18':'BCHM18',
-		'BTC/USD':'XBTUSD',
-//		'ETHM18':'ETHM18',
-//		'LTCM18':'LTCM18',
-//		'ADAM18':'ADAM18',
-		'XRPM18':'XRPM18'
-	},
+	markets : [
+//		'BCHM18',
+		'XBTUSD',
+//		'ETHM18',
+//		'LTCM18',
+//		'ADAM18',
+		'XRPM18'
+	],
 	// optional time frames
 	// m1,m5,h1,d1 are bitmex default time frames
 	// all frames must be able to calculate from these time frames.
@@ -30,5 +31,5 @@ Market.server({
 	},
 	// getting historical data form below
 	history : "2018-04-01T00:00:00.000Z", // Z make this utc
-	polling : 30000 // ms default
+//	polling : 30000 // ms default
 });

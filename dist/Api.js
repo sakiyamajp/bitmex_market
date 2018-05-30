@@ -46,9 +46,6 @@ let bitmexTimeFrames = {
 	"h1": 60 * 60 * 1000,
 	"d1": 24 * 60 * 60 * 1000
 };
-let sleep = ms => {
-	return new Promise(resolve => setTimeout(resolve, ms));
-};
 async function createModels(ccxt, ccxt_markets, connection, frames, markets) {
 	let result = {};
 	for (let bitmexName of markets) {
@@ -68,19 +65,24 @@ async function createModels(ccxt, ccxt_markets, connection, frames, markets) {
 exports.default = async function (options) {
 	let connection = _mongoose2.default.createConnection(options.mongo);
 	let configModel = connection.model("config", (0, _Config2.default)());
+	let config, frames;
 	if (options.subscribe) {
-		var config = (0, _extend2.default)({}, defaultOptions, options);
-		var frames = (0, _extend2.default)({}, options.timeframes, bitmexTimeFrames);
+		config = (0, _extend2.default)({}, defaultOptions, options);
+		frames = (0, _extend2.default)({}, options.timeframes, bitmexTimeFrames);
 		configModel.save(frames, options.history, options.markets);
 	} else {
-		var config = await configModel.load();
-		var frames = config.timeframes;
+		config = await configModel.load();
+		frames = config.timeframes;
 	}
 	let ccxt = new _ccxt2.default.bitmex();
 	let ccxt_markets = await ccxt.fetchMarkets();
-	var redisClient = redis.createClient(options.redis);
-	redisClient.on('error', function (e) {});
+	let redisClient = redis.createClient(options.redis);
 	let models = await createModels(ccxt, ccxt_markets, connection, frames, config.markets);
+	if (options.subscribe) {
+		let observer = new _Observer2.default(models[market], bitmexTimeFrames, config.timeframes, config.history, config.polling, redisClient);
+		await observer.load();
+		await sleep(20000);
+	}
 	let callbacks = {};
 	for (let market in models) {
 		for (let frame in config.timeframes) {
@@ -102,12 +104,5 @@ exports.default = async function (options) {
 			}
 		}
 	});
-	if (options.subscribe) {
-		for (let market in models) {
-			let observer = new _Observer2.default(models[market], bitmexTimeFrames, config.timeframes, config.history, config.polling, redisClient);
-			await observer.load();
-			await sleep(20000);
-		}
-	}
 	return models;
 };

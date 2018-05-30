@@ -32,7 +32,11 @@ function findBaseMs(ms){
 	}
 	return found;
 }
-export default function Candle(ccxt,market,frame,ms,ccxtName,bitmexName){
+export default function Candle(
+		ccxt,
+		ccxt_market,
+		frame,
+		ms){
 	var candleSchema = new mongoose.Schema({
 		// 開始時間 open time
 		time : {
@@ -46,11 +50,8 @@ export default function Candle(ccxt,market,frame,ms,ccxtName,bitmexName){
 		volume : Number,
 	});
 	candleSchema.statics.ccxt = ccxt;
-	candleSchema.statics.description = market;
-	candleSchema.statics.market = {
-		ccxt : ccxtName,
-		bitmex : bitmexName
-	};
+	candleSchema.statics.market = ccxt_market;
+	candleSchema.statics.channel = `${ccxt_market.id}_${frame}`;
 	let baseMs = findBaseMs(ms);
 	if(baseMs){
 		candleSchema.statics.baseMs = baseMs;
@@ -92,7 +93,7 @@ export default function Candle(ccxt,market,frame,ms,ccxtName,bitmexName){
 			break;
 		}
 		var data = await ccxt.fetchOHLCV(
-			ccxtName,
+			ccxt_market.symbol,
 			name,
 			since,
 			500,{
@@ -131,6 +132,21 @@ export default function Candle(ccxt,market,frame,ms,ccxtName,bitmexName){
 		let result = new this(d);
 		delete result.timestamp;
 		return result;
+	};
+	candleSchema.statics.test = async function(){
+		let first = await this.first();
+		let last = await this.last();
+		if(!first || !last){
+			return true;
+		}
+		let count = last.time.getTime() - first.time.getTime();
+		count /= this.span;
+		count++;
+		let d = await this.count({}).exec();
+		if(d != count){
+			console.info(`${this.market.symbol} ${this.frame} check NG lost ${count - d} candles`);
+		}
+		return d == count;
 	};
 	candleSchema.methods.add = function(candle){
 		if(this.time >= candle.time){

@@ -52,6 +52,8 @@ class Observer {
 		for (let frame in this.models) {
 			this._triggerUpdate(this.models[frame]);
 		}
+	}
+	async subscribe() {
 		for (let localName in this.frames) {
 			let model = this.models[localName];
 			let distination = [];
@@ -93,19 +95,29 @@ class Observer {
 			});
 		});
 	}
+	async _needFetch(model) {
+		let now = new Date().getTime();
+		let mustHave = now - now % model.span - model.span;
+		let last = await model.last();
+		let test = await model.test();
+		return !(test && last && last.time.getTime() == mustHave);
+	}
 	async _polling(model, distination) {
 		while (true) {
-			let since = await this._getLastTime(model);
-			try {
-				await model.fetch(since, async d => {
-					this._triggerUpdate(model);
-					this._convertDistination(distination);
-				});
-			} catch (e) {}
+			let needFetch = await this._needFetch(model);
+			if (needFetch) {
+				let since = await this._getFailSafeLastTime(model);
+				try {
+					await model.fetch(since, async d => {
+						this._triggerUpdate(model);
+						this._convertDistination(distination);
+					});
+				} catch (e) {}
+			}
 			await sleep(this.polling);
 		}
 	}
-	async _getLastTime(model) {
+	async _getFailSafeLastTime(model) {
 		let since = new Date(this.history_start).getTime();
 		let last = await model.last();
 		if (last) {
@@ -115,7 +127,11 @@ class Observer {
 	}
 	_loadHistorical(model, history_start) {
 		return new Promise(async resolve => {
-			let since = await this._getLastTime(model);
+			let needFetch = await this._needFetch(model);
+			if (!needFetch) {
+				return resolve();
+			}
+			let since = await this._getFailSafeLastTime(model);
 			while (true) {
 				console.info(`getting historical ${model.market.id}${model.frame} data from timestamp : ${new Date(since)}`);
 				let data = await model.fetch(since);
@@ -130,7 +146,7 @@ class Observer {
 		});
 	}
 	async _triggerUpdate(model) {
-		model.test();
+		//		model.test();
 		let data = await model.last();
 		this.publisher.publish(model.channel, JSON.stringify(data));
 	}

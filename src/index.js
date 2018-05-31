@@ -9,7 +9,7 @@ import extend from 'extend';
 var redis = require("redis");
 
 let defaultOptions = {
-	polling : 30000,
+	polling : 20000,
 	redis : {},
 	timeframes : {},
 	markets : ['XBTUSD']
@@ -59,7 +59,15 @@ export default async function(options){
 		var frames = config.timeframes;
 	}
 	let ccxt = new Ccxt.bitmex();
-	let ccxt_markets = await ccxt.fetchMarkets();
+	let ccxt_markets;
+	while(!ccxt_markets){
+		try{
+			ccxt_markets = await ccxt.fetchMarkets();
+		}catch(e){
+
+		}
+		await sleep(3000);
+	}
 	var redisClient = redis.createClient(options.redis);
 	redisClient.on('error', function(e){});
 	let models = await createModels(
@@ -90,6 +98,7 @@ export default async function(options){
 		}
 	});
 	if(options.subscribe){
+		let observers = [];
 		for(let market in models){
 			let observer = new Observer(
 					models[market],
@@ -99,7 +108,11 @@ export default async function(options){
 					config.polling,
 					redisClient);
 			await observer.load();
-			await sleep(20000);
+			observers.push(observer);
+			await sleep(8000);
+		}
+		for(let observer of observers){
+			await observer.subscribe();
 		}
 	}
 	return models;

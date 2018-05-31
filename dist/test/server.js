@@ -16,13 +16,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 		port: 6379,
 		password: "test_redis_password"
 	},
-	markets: [
-	//		'BCHM18',
-	'XBTUSD',
-	//		'ETHM18',
-	//		'LTCM18',
-	//		'ADAM18',
-	'XRPM18'],
+	markets: ['BCHM18', 'XBTUSD', 'ETHM18', 'LTCM18', 'ADAM18', 'XRPM18'],
 	// optional time frames
 	// m1,m5,h1,d1 are bitmex default time frames
 	// all frames must be able to calculate from these time frames.
@@ -37,5 +31,5 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 	},
 	// getting historical data form below
 	history: "2018-04-01T00:00:00.000Z" // Z make this utc
-	//	polling : 30000 // ms default
+	//	polling : 20000 // ms default
 });

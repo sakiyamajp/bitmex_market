@@ -10,11 +10,11 @@ Market({
 		password : "test_redis_password"
 	},
 	markets : [
-//		'BCHM18',
+		'BCHM18',
 		'XBTUSD',
-//		'ETHM18',
-//		'LTCM18',
-//		'ADAM18',
+		'ETHM18',
+		'LTCM18',
+		'ADAM18',
 		'XRPM18'
 	],
 	// optional time frames
@@ -31,5 +31,5 @@ Market({
 	},
 	// getting historical data form below
 	history : "2018-04-01T00:00:00.000Z", // Z make this utc
-//	polling : 30000 // ms default
+//	polling : 20000 // ms default
 });

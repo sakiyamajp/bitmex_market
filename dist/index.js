@@ -35,7 +35,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var redis = require("redis");
 
 let defaultOptions = {
-	polling: 30000,
+	polling: 20000,
 	redis: {},
 	timeframes: {},
 	markets: ['XBTUSD']
@@ -77,7 +77,13 @@ exports.default = async function (options) {
 		var frames = config.timeframes;
 	}
 	let ccxt = new _ccxt2.default.bitmex();
-	let ccxt_markets = await ccxt.fetchMarkets();
+	let ccxt_markets;
+	while (!ccxt_markets) {
+		try {
+			ccxt_markets = await ccxt.fetchMarkets();
+		} catch (e) {}
+		await sleep(3000);
+	}
 	var redisClient = redis.createClient(options.redis);
 	redisClient.on('error', function (e) {});
 	let models = await createModels(ccxt, ccxt_markets, connection, frames, config.markets);
@@ -103,10 +109,15 @@ exports.default = async function (options) {
 		}
 	});
 	if (options.subscribe) {
+		let observers = [];
 		for (let market in models) {
 			let observer = new _Observer2.default(models[market], bitmexTimeFrames, config.timeframes, config.history, config.polling, redisClient);
 			await observer.load();
-			await sleep(20000);
+			observers.push(observer);
+			await sleep(8000);
+		}
+		for (let observer of observers) {
+			await observer.subscribe();
 		}
 	}
 	return models;

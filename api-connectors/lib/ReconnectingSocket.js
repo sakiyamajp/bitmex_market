@@ -83,13 +83,13 @@ WebSocketClient.prototype.open = function(url){
           this.logError(`Server responded with [${response.statusCode}], will retry soon: ${buf}`);
           this.autoReconnectInterval = 5000; // first retry in 5 seconds
           closeConnection(CLOSE_BAD_GATEWAY);
-        
+
       } else if (response.statusCode === 503) {
         // maintainence / downtime
         this.logError(`Server responded with [${response.statusCode}], will retry soon: ${buf}`);
         this.autoReconnectInterval = 5000; // first retry in 5 seconds
         closeConnection(CLOSE_DOWNTIME);
-        
+
       } else {
         this.logError(`Unexpected response from server [${response.statusCode}]: ${buf}`);
         closeConnection(CLOSE_UNEXPECTED);
@@ -109,12 +109,12 @@ WebSocketClient.prototype.open = function(url){
 WebSocketClient.prototype.log = function() {
   if (!this.logConnection) return;
   const args = [].slice.call(arguments);
-  console.log.apply(console, ['WebSocket [INFO]:'].concat(args));
+//  console.log.apply(console, ['WebSocket [INFO]:'].concat(args));
 }
 
 WebSocketClient.prototype.logError = function() {
   const args = [].slice.call(arguments);
-  console.error.apply(console, ['WebSocket [ERROR]:'].concat(args));
+//  console.error.apply(console, ['WebSocket [ERROR]:'].concat(args));
 }
 
 WebSocketClient.prototype.pause = function() {

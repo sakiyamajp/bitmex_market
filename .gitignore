@@ -13,6 +13,8 @@ Thumbs.db
 .project
 .buildpath
 .settings/
+.pydevproject
+.ipynb_checkpoints
 
 # User specific & automatically generated files #
 #################################################
@@ -31,7 +33,6 @@ Thumbs.db
 *.pyc
 *.ckpt.*
 checkpoint
-*.ipynb
 package-lock.json
 
 real.js

@@ -1,16 +1,23 @@
-# subscribe bitmex XBTUSD market data
+# subscribe bitmex ohlcv markets data
 
-mongodb and redis required
+Please note that I do not take any responsibility or liability for any damage or loss caused through this module.
+
+# requirements
+mongodb
+redis
+node.js
+
 
 ```
 npm install sakiyamajp/bitmex_market#master
 ```
 
-## node.js subscribe ohlcv market data from bitmex
+## node.js subscribe ohlcv markets data from bitmex
 ```
-import Market from 'bitmex_market';
-Market({
-	// subscribe ohlc market data from bitmex
+import Markets from 'bitmex_market';
+Markets({
+	// subscribe ohlcv markets data from bitmex api.
+	// default : false,
 	subscribe : true,
 	// mongoose connection string
 	mongo : "mongodb://test_user:test_password@127.0.0.1:27017/test_db",
@@ -20,6 +27,8 @@ Market({
 		port : 6379,
 		password : "test_redis_password"
 	},
+	// target markets
+	// default : ['XBTUSD']
 	markets : [
 		'BCHM18',
 		'XBTUSD',
@@ -46,13 +55,27 @@ Market({
 //	polling : 20000 // ms default,
 //	verbose : true // default
 });
+
+// realtime XRPM18 m1 data via pubsub
+markets.XRPM18.m1.on((candle,market,timeframe) => {
+	console.log(candle,market,timeframe);
+});
+
+// realtime XBTUSD d1 data via pubsub
+markets.XBTUSD.d1.on((candle,market,timeframe) => {
+	console.log(candle,market,timeframe);
+})
+
+// manually loading ohlcv
+let candles = await markets.XRPM18.m1.load(3);
+console.log(candles)
 ```
 
-## node.js subscribe ohlcv market data from databases
+## node.js subscribe ohlcv markets data from databases
 ```
-import Market from 'bitmex_market';
+import Markets from 'bitmex_market';
 (async () => {
-	let market = await Market({
+	let markets = await Markets({
 		mongo : "mongodb://test_user:test_password@127.0.0.1:27017/test_db",
 		redis : {
 			host : "127.0.0.1",
@@ -60,30 +83,50 @@ import Market from 'bitmex_market';
 			password : "test_redis_password"
 		},
 	});
-	let xrp = market.XRPM18;
+	let xrp = markets.XRPM18;
 
-	// realtime XRPM18 m1 data via push communication
+	// realtime XRPM18 m1 data via pubsub
 	xrp.m1.on((candle,market,timeframe)=>{
 		console.log(candle,market,timeframe);
 	});
 
-	// realtime XRPM18 m2 data via push communication
+	// realtime XRPM18 m2 data via pubsub
 	xrp.m2.on(candle => {
 		console.log(candle);
 	});
 
-	// realtime XBTUSD m1 data via push communication
-	market.XBTUSD.m1.on((candle,market,timeframe) => {
+	// realtime XBTUSD m1 data via pubsub
+	markets.XBTUSD.m1.on((candle,market,timeframe) => {
 		console.log(candle,market,timeframe);
 	})
 
-	// loading ohlcv manually
+	// manually loading ohlcv
 	let candles = await xrp.m1.load(3);
 	console.log(candles)
+/*
+[ { time: 2018-06-04T07:07:00.000Z,
+    volume: 3169,
+    close: 0.00008886,
+    low: 0.00008886,
+    high: 0.00008886,
+    open: 0.00008887 },
+  { time: 2018-06-04T07:08:00.000Z,
+    volume: 2985,
+    close: 0.00008887,
+    low: 0.00008887,
+    high: 0.00008887,
+    open: 0.00008886 },
+  { time: 2018-06-04T07:09:00.000Z,
+    volume: 15830,
+    close: 0.00008887,
+    low: 0.00008886,
+    high: 0.00008887,
+    open: 0.00008887 } ]
+*/
 })();
 ```
 
-## python3.5 subscribe ohlcv market data from mongodb
+## python3.5 subscribe ohlcv markets data from mongodb
 ```
 from bitmex_market import Markets
 // pymongo connection string
@@ -145,7 +188,7 @@ list(cursor)
 
 ```
 
-## python3.5 subscribe ohlcv market data from redis via pubsub
+## python3.5 subscribe ohlcv markets data via redis pubsub
 ```
 import redis
 import json

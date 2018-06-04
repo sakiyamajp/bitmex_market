@@ -7,7 +7,7 @@ var _index2 = _interopRequireDefault(_index);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 (async () => {
-	let market = await (0, _index2.default)({
+	let markets = await (0, _index2.default)({
 		mongo: "mongodb://test_user:test_password@127.0.0.1:27017/test_db",
 		redis: {
 			host: "127.0.0.1",
@@ -15,16 +15,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 			password: "test_redis_password"
 		}
 	});
-	let xrp = market.XRPM18;
-
+	let xrp = markets.XRPM18;
 	xrp.m1.on((candle, market, timeframe) => {
 		console.log(candle, market, timeframe);
 	});
 	xrp.m2.on(candle => {
 		console.log(candle);
 	});
-
-	market.XBTUSD.m1.on((candle, market, timeframe) => {
+	markets.XBTUSD.m1.on((candle, market, timeframe) => {
 		console.log(candle, market, timeframe);
 	});
 

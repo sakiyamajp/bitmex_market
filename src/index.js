@@ -14,7 +14,7 @@ let defaultOptions = {
 	timeframes : {},
 	markets : ['XBTUSD'],
 	verbose : true,
-	subscribe : true,
+	subscribe : false,
 };
 let bitmexTimeFrames = {
 	"m1" : 1 * 60 * 1000,
@@ -55,7 +55,7 @@ export default async function(options){
 	if(options.subscribe){
 		var config = extend({},defaultOptions,options);
 		var frames = extend({},options.timeframes,bitmexTimeFrames);
-		configModel.save(frames,options.history,options.markets);
+		/*await*/ configModel.save(frames,options.history,options.markets);
 	}else{
 		var config = await configModel.load();
 		var frames = config.timeframes;
@@ -80,7 +80,7 @@ export default async function(options){
 		config.markets);
 	let callbacks = {};
 	for(let market in models){
-		for( let frame in config.timeframes){
+		for( let frame in frames){
 			models[market][frame].on = (next) => {
 				let channel = models[market][frame].channel;
 				if(!callbacks[channel]){

@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 export default function Config(){
 	var configSchema = new mongoose.Schema({
-		// 開始時間 open time
 		timeframes : mongoose.Schema.Types.Mixed,
 		history : Date,
 		markets : mongoose.Schema.Types.Mixed,

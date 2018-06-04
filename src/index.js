@@ -71,7 +71,9 @@ export default async function(options){
 		await sleep(3000);
 	}
 	var redisClient = redis.createClient(options.redis);
-	redisClient.on('error', function(e){});
+	redisClient.on('error', function(e){
+//		console.log(e);
+	});
 	let models = await createModels(
 		ccxt,
 		ccxt_markets,
@@ -101,6 +103,10 @@ export default async function(options){
 	});
 	if(options.subscribe){
 		let observers = [];
+		let publishClient = redis.createClient(options.redis);
+		publishClient.on('error', function(e){
+//			console.log(e);
+		});
 		for(let market in models){
 			let observer = new Observer(
 					models[market],
@@ -109,7 +115,7 @@ export default async function(options){
 					config.history,
 					config.polling,
 					config.verbose,
-					redisClient);
+					publishClient);
 			await observer.load();
 			observers.push(observer);
 			await sleep(8000);

@@ -132,7 +132,7 @@ import Markets from 'bitmex_market';
 
 ## python3.5 subscribe ohlcv markets data from mongodb
 ```
-from bitmex_market import Markets
+from bitmex_market.Markets import Markets
 // pymongo connection string
 markets = Markets(mongo = "mongodb://test_user:test_password@127.0.0.1:27017/test_db")
 

@@ -148,7 +148,6 @@ class Observer {
 		});
 	}
 	async _triggerUpdate(model) {
-		//		model.test();
 		let data = await model.last();
 		this.publisher.publish(model.channel, JSON.stringify(data));
 	}

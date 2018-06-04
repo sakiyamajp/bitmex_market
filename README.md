@@ -1,4 +1,4 @@
-# subscribe bitmex ohlcv markets data
+# nodejs subscribe bitmex ohlcv markets data
 
 Please note that I do not take any responsibility or liability for any damage or loss caused through this module.
 
@@ -13,64 +13,66 @@ node.js
 npm install sakiyamajp/bitmex_market#master
 ```
 
-## node.js subscribe ohlcv markets data from bitmex
+## nodejs subscribe ohlcv markets data from bitmex
 ```
 import Markets from 'bitmex_market';
-Markets({
-	// subscribe ohlcv markets data from bitmex api.
-	// default : false,
-	subscribe : true,
-	// mongoose connection string
-	mongo : "mongodb://test_user:test_password@127.0.0.1:27017/test_db",
-	// redis connection config
-	redis : {
-		host : "127.0.0.1",
-		port : 6379,
-		password : "test_redis_password"
-	},
-	// target markets
-	// default : ['XBTUSD']
-	markets : [
-		'BCHM18',
-		'XBTUSD',
-		'ETHM18',
-		'LTCM18',
-		'ADAM18',
-		'XRPM18'
-	],
-	// optional time frames
-	// m1,m5,h1,d1 are bitmex default time frames
-	// optional time frames must be able to calculate from above bitmex default time frames.
-	// default : {},
-	timeframes : {
-		"m2" : 2 * 60 * 1000,// { name : ms }
-		"m15" : 15 * 60 * 1000,// { name : ms }
-		"m30" : 30 * 60 * 1000,// { name : ms }
-		"h2" : 2 * 60 * 60 * 1000,// { name : ms }
-		"h4" : 4 * 60 * 60 * 1000,// { name : ms }
-		"h8" : 8 * 60 * 60 * 1000,// { name : ms }
-		"h12" : 12 * 60 * 60 * 1000,// { name : ms }
-	},
-	// getting historical data form below
-	// Z make this utc
-	history : "2018-04-01T00:00:00.000Z",
-//	polling : 20000 // ms default 20000,
-//	verbose : true // default true
-});
+(async () => {
+	let markets = await Markets({
+		// subscribe ohlcv markets data from bitmex api.
+		// default : false,
+		subscribe : true,
+		// mongoose connection string
+		mongo : "mongodb://test_user:test_password@127.0.0.1:27017/test_db",
+		// redis connection config
+		redis : {
+			host : "127.0.0.1",
+			port : 6379,
+			password : "test_redis_password"
+		},
+		// target markets
+		// default : ['XBTUSD']
+		markets : [
+			'BCHM18',
+			'XBTUSD',
+			'ETHM18',
+			'LTCM18',
+			'ADAM18',
+			'XRPM18'
+		],
+		// optional time frames
+		// m1,m5,h1,d1 are bitmex default time frames
+		// optional time frames must be able to calculate from above bitmex default time frames.
+		// default : {},
+		timeframes : {
+			"m2" : 2 * 60 * 1000,// { name : ms }
+			"m15" : 15 * 60 * 1000,// { name : ms }
+			"m30" : 30 * 60 * 1000,// { name : ms }
+			"h2" : 2 * 60 * 60 * 1000,// { name : ms }
+			"h4" : 4 * 60 * 60 * 1000,// { name : ms }
+			"h8" : 8 * 60 * 60 * 1000,// { name : ms }
+			"h12" : 12 * 60 * 60 * 1000,// { name : ms }
+		},
+		// getting historical data form below
+		// Z make this utc
+		history : "2018-04-01T00:00:00.000Z",
+	//	polling : 20000 // ms default 20000,
+	//	verbose : true // default true
+	});
 
-// realtime XRPM18 m1 data via pubsub
-markets.XRPM18.m1.on((candle,market,timeframe) => {
-	console.log(candle,market,timeframe);
-});
+	// realtime XRPM18 m1 data via pubsub
+	markets.XRPM18.m1.on((candle,market,timeframe) => {
+		console.log(candle,market,timeframe);
+	});
 
-// realtime XBTUSD d1 data via pubsub
-markets.XBTUSD.d1.on((candle,market,timeframe) => {
-	console.log(candle,market,timeframe);
-})
+	// realtime XBTUSD d1 data via pubsub
+	markets.XBTUSD.d1.on((candle,market,timeframe) => {
+		console.log(candle,market,timeframe);
+	})
 
-// manually loading ohlcv
-let candles = await markets.XRPM18.m1.load(3);
-console.log(candles)
+	// manually loading ohlcv
+	let candles = await markets.XRPM18.m1.load(3);
+	console.log(candles)
+})();
 ```
 
 ## node.js subscribe ohlcv markets data from databases

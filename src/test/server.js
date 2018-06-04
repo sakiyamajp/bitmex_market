@@ -51,4 +51,7 @@ import Markets from '../index';
 
 	let candles = await markets.XRPM18.m1.load(3);
 	console.log(candles)
+
+	candles = await markets.XBTUSD.d1.load(2,new Date('2018/05/01Z'));
+console.log(candles)
 })();

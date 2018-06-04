@@ -29,7 +29,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 		'XRPM18'],
 		// optional time frames
 		// m1,m5,h1,d1 are bitmex default time frames
-		// all frames must be able to calculate from these time frames.
+		// optional time frames must be able to calculate from above bitmex default time frames.
 		// default : {},
 		timeframes: {
 			"m2": 2 * 60 * 1000, // { name : ms }
@@ -41,9 +41,10 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 			"h12": 12 * 60 * 60 * 1000 // { name : ms }
 		},
 		// getting historical data form below
-		history: "2018-04-01T00:00:00.000Z" // Z make this utc
-		//	polling : 20000 // ms default,
-		//	verbose : true // default
+		// Z make this utc
+		history: "2018-04-01T00:00:00.000Z"
+		//		polling : 20000 // ms default 20000,
+		//		verbose : true // default true
 	});
 
 	markets.XRPM18.m1.on((candle, market, timeframe) => {

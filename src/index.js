@@ -13,7 +13,8 @@ let defaultOptions = {
 	redis : {},
 	timeframes : {},
 	markets : ['XBTUSD'],
-	verbose : true
+	verbose : true,
+	subscribe : true,
 };
 let bitmexTimeFrames = {
 	"m1" : 1 * 60 * 1000,

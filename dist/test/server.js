@@ -31,5 +31,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 	},
 	// getting historical data form below
 	history: "2018-04-01T00:00:00.000Z" // Z make this utc
-	//	polling : 20000 // ms default
+	//	polling : 20000 // ms default,
+	//	verbose : true // default
 });

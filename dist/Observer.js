@@ -26,9 +26,11 @@ let sleep = ms => {
 	return new Promise(resolve => setTimeout(resolve, ms));
 };
 class Observer {
-	constructor(models, frames, optional_frames, history_start, polling, publisher) {
+	constructor(models, frames, optional_frames, history_start, polling, verbose, publisher) {
 		this.frames = frames;
 		this.models = models;
+		this.verbose = verbose;
+		this.debug = this.verbose ? console.info : () => {};
 		this.polling = polling;
 		this.publisher = publisher;
 		this.history_start = history_start;
@@ -133,10 +135,10 @@ class Observer {
 			}
 			let since = await this._getFailSafeLastTime(model);
 			while (true) {
-				console.info(`getting historical ${model.market.id}${model.frame} data from timestamp : ${new Date(since)}`);
+				this.debug(`getting historical ${model.market.id}${model.frame} data from timestamp : ${new Date(since)}`);
 				let data = await model.fetch(since);
 				if (data.length < 499) {
-					console.info(`got all ${model.market.id} ${model.frame} histories`);
+					this.debug(`got all ${model.market.id} ${model.frame} histories`);
 					break;
 				}
 				since = data[data.length - 1].time.getTime() + model.span;

@@ -12,7 +12,8 @@ let defaultOptions = {
 	polling : 20000,
 	redis : {},
 	timeframes : {},
-	markets : ['XBTUSD']
+	markets : ['XBTUSD'],
+	verbose : true
 };
 let bitmexTimeFrames = {
 	"m1" : 1 * 60 * 1000,
@@ -106,6 +107,7 @@ export default async function(options){
 					config.timeframes,
 					config.history,
 					config.polling,
+					config.verbose,
 					redisClient);
 			await observer.load();
 			observers.push(observer);

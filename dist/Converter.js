@@ -13,7 +13,7 @@ exports.default = async function Converter(candles, target) {
 		}
 	}
 	let first = await base.first();
-	if(!first){
+	if (!first) {
 		// mongo delay
 		return false;
 	}

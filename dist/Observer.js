@@ -44,7 +44,7 @@ class Observer {
 	async load() {
 		let promises = [];
 		for (let localName in this.frames) {
-			let proimse = this._loadHistorical(this.models[localName], this.history_start);
+			let proimse = this._loadHistorical(this.models[localName]);
 			promises.push(proimse);
 		}
 		await Promise.all(promises);
@@ -121,13 +121,21 @@ class Observer {
 	}
 	async _getFailSafeLastTime(model) {
 		let since = new Date(this.history_start).getTime();
+
+		if (model.market.id != 'XBTUSD') {
+			let oldest = new Date('2018/04/01Z').getTime();
+			if (since < oldest) {
+				since = oldest;
+			}
+		}
+
 		let last = await model.last();
 		if (last) {
 			since = last.time.getTime() - model.span * 300;
 		}
 		return since;
 	}
-	_loadHistorical(model, history_start) {
+	_loadHistorical(model) {
 		return new Promise(async resolve => {
 			let needFetch = await this._needFetch(model);
 			if (!needFetch) {

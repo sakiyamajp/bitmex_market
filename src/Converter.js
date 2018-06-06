@@ -8,10 +8,6 @@ export default async function Converter(candles,target){
 		}
 	}
 	let first = await base.first();
-	if(!first){
-		// mongo delay
-		return false;
-	}
 	let start = first.time.getTime();
 	let candleCount = target.span / base.span;
 

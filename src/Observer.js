@@ -120,14 +120,6 @@ export default class Observer{
 	}
 	async _getFailSafeLastTime(model){
 		let since = new Date(this.history_start).getTime();
-
-		if(model.market.id != 'XBTUSD'){
-			let oldest = new Date('2018/04/01Z').getTime();
-			if(since < oldest){
-				since = oldest;
-			}
-		}
-
 		let last = await model.last();
 		if(last){
 			since = last.time.getTime() - model.span*300;
@@ -144,11 +136,16 @@ export default class Observer{
 			while(true){
 				this.debug(`getting historical ${model.market.id}${model.frame} data from timestamp : ${new Date(since)}`);
 				let data = await model.fetch(since);
-				if(data.length < 499){
+				needFetch = await this._needFetch(model);
+				if(!needFetch && data.length < 499){
 					this.debug(`got all ${model.market.id} ${model.frame} histories`)
 					break;
 				}
-				since = data[data.length - 1].time.getTime() + model.span;
+				if(data.length){
+					since = data[data.length - 1].time.getTime() + model.span;
+				}else{
+					since += model.span * 499;
+				}
 				await sleep(10000);
 			}
 			resolve();

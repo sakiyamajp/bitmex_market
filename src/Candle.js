@@ -137,7 +137,7 @@ export default function Candle(
 		let first = await this.first();
 		let last = await this.last();
 		if(!first || !last){
-			return true;
+			return false;
 		}
 		let count = last.time.getTime() - first.time.getTime();
 		count /= this.span;

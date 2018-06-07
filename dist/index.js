@@ -14,6 +14,10 @@ var _Candle = require('./Candle');
 
 var _Candle2 = _interopRequireDefault(_Candle);
 
+var _Depth = require('./Depth');
+
+var _Depth2 = _interopRequireDefault(_Depth);
+
 var _Config = require('./Config');
 
 var _Config2 = _interopRequireDefault(_Config);
@@ -73,6 +77,53 @@ async function createModels(ccxt, ccxt_markets, connection, frames, markets) {
 	}
 	return result;
 }
+async function suscribeCandles(config, options, debug, models, publishClient, socket) {
+	let observers = [];
+	for (let market in models) {
+		let observer = new _Observer2.default(models[market], bitmexTimeFrames, config, options, publishClient, socket, debug);
+		let start = await observer.load();
+		if (!config.histories) {
+			config.histories = {};
+		}
+		config.histories[market] = start;
+		observer.subscribeRest();
+		observers.push(observer);
+		await sleep(8000);
+	}
+	await config.save();
+	for (let observer of observers) {
+		observer.subscribeSocket();
+	}
+}
+function pubsub(models, options) {
+	var redisClient = redis.createClient(options.redis);
+	redisClient.on('error', function (e) {
+		//		debug(e);
+	});
+	let callbacks = {};
+	for (let market in models) {
+		for (let property in models[market]) {
+			models[market][property].on = next => {
+				let channel = models[market][property].channel;
+				if (!callbacks[channel]) {
+					callbacks[channel] = [];
+				}
+				callbacks[channel].push(next);
+				redisClient.subscribe(channel);
+			};
+		}
+	}
+	redisClient.on("message", function (channel, d) {
+		if (!callbacks[channel] || !callbacks[channel].length) {
+			return;
+		}
+		let match = channel.match(/^([^_]*)_([^_]*)$/);
+		for (let next of callbacks[channel]) {
+			next(JSON.parse(d), match[1], match[2]);
+		}
+	});
+	return models;
+}
 
 exports.default = async function (options) {
 	let connection = _mongoose2.default.createConnection(options.mongo);
@@ -93,35 +144,8 @@ exports.default = async function (options) {
 		} catch (e) {}
 		await sleep(3000);
 	}
-	var redisClient = redis.createClient(options.redis);
-	redisClient.on('error', function (e) {
-		//		debug(e);
-	});
 	let models = await createModels(ccxt, ccxt_markets, connection, frames, config.markets);
-	let callbacks = {};
-	for (let market in models) {
-		for (let frame in frames) {
-			models[market][frame].on = next => {
-				let channel = models[market][frame].channel;
-				if (!callbacks[channel]) {
-					callbacks[channel] = [];
-				}
-				callbacks[channel].push(next);
-				redisClient.subscribe(channel);
-			};
-		}
-	}
-	redisClient.on("message", function (channel, d) {
-		if (!callbacks[channel] || !callbacks[channel].length) {
-			return;
-		}
-		let match = channel.match(/^([^_]*)_([^_]*)$/);
-		for (let next of callbacks[channel]) {
-			next(JSON.parse(d), match[1], match[2]);
-		}
-	});
 	if (options.subscribe) {
-		let observers = [];
 		let publishClient = redis.createClient(options.redis);
 		publishClient.on('error', function (e) {
 			//			debug(e);
@@ -131,21 +155,18 @@ exports.default = async function (options) {
 			alwaysReconnect: true
 		});
 		socket.on('error', e => {});
-		for (let market in models) {
-			let observer = new _Observer2.default(models[market], bitmexTimeFrames, config, options, publishClient, socket, debug);
-			let start = await observer.load();
-			if (!config.histories) {
-				config.histories = {};
-			}
-			config.histories[market] = start;
-			observer.subscribeRest();
-			observers.push(observer);
-			await sleep(8000);
-		}
-		await config.save();
-		for (let observer of observers) {
-			observer.subscribeSocket();
-		}
+		//		await suscribeCandles(
+		//				config,
+		//				options,
+		//				debug,
+		//				models,
+		//				publishClient,
+		//				socket);
 	}
+	for (let market in models) {
+		models[market].depth = new _Depth2.default(market);
+		if (options.subscribe) {}
+	}
+	models = pubsub(models, options);
 	return models;
 };

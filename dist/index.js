@@ -117,9 +117,16 @@ function pubsub(models, options) {
 		if (!callbacks[channel] || !callbacks[channel].length) {
 			return;
 		}
+		d = JSON.parse(d);
 		let match = channel.match(/^([^_]*)_([^_]*)$/);
+		let market = match[1];
+		let property = match[2];
+		if (property == 'depth') {
+			d.time = new Date(d.time);
+			models[market].depth.update(d);
+		}
 		for (let next of callbacks[channel]) {
-			next(JSON.parse(d), match[1], match[2]);
+			next(d, market, property);
 		}
 	});
 	return models;
@@ -145,27 +152,30 @@ exports.default = async function (options) {
 		await sleep(3000);
 	}
 	let models = await createModels(ccxt, ccxt_markets, connection, frames, config.markets);
-	if (options.subscribe) {
-		let publishClient = redis.createClient(options.redis);
-		publishClient.on('error', function (e) {
-			//			debug(e);
-		});
-		let socket = new _apiConnectors2.default({
-			testnet: false,
-			alwaysReconnect: true
-		});
-		socket.on('error', e => {});
-		//		await suscribeCandles(
-		//				config,
-		//				options,
-		//				debug,
-		//				models,
-		//				publishClient,
-		//				socket);
-	}
 	for (let market in models) {
 		models[market].depth = new _Depth2.default(market);
-		if (options.subscribe) {}
+	}
+	if (!options.subscribe) {
+		return pubsub(models, options);
+	}
+	let publishClient = redis.createClient(options.redis);
+	publishClient.on('error', function (e) {
+		//			debug(e);
+	});
+	let socket = new _apiConnectors2.default({
+		testnet: false,
+		alwaysReconnect: true
+	});
+	socket.on('error', e => {});
+	//	await suscribeCandles(
+	//			config,
+	//			options,
+	//			debug,
+	//			models,
+	//			publishClient,
+	//			socket);
+	for (let market in models) {
+		models[market].depth.socket(socket, publishClient);
 	}
 	models = pubsub(models, options);
 	return models;

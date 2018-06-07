@@ -53,7 +53,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 	markets.XBTUSD.d1.on((candle, market, timeframe) => {
 		console.log(candle, market, timeframe);
 	});
-
+	markets.XBTUSD.depth.on(d => {
+		//		console.log(d);
+	});
 	let candles = await markets.XRPM18.m1.load(3);
 	console.log(candles);
 

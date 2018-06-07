@@ -22,6 +22,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 	xrp.m2.on(candle => {
 		console.log(candle);
 	});
+	xrp.depth.on(d => {
+		//		console.log(d);
+	});
 	markets.XBTUSD.m1.on((candle, market, timeframe) => {
 		console.log(candle, market, timeframe);
 	});

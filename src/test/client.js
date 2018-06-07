@@ -16,6 +16,9 @@ import Markets from '../index';
 	xrp.m2.on(candle => {
 		console.log(candle);
 	});
+	xrp.depth.on(d => {
+//		console.log(d);
+	})
 	markets.XBTUSD.m1.on((candle,market,timeframe) => {
 		console.log(candle,market,timeframe);
 	})

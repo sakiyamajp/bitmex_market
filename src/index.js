@@ -121,6 +121,7 @@ function pubsub(models,options){
 	return models;
 }
 export default async function(options){
+	console.log("connecting mongo")
 	let connection = mongoose.createConnection(options.mongo);
 	let configModel = connection.model("config",Config());
 	if(options.subscribe){
@@ -133,11 +134,12 @@ export default async function(options){
 	let debug = options.verbose ? console.info : () => {};
 	let ccxt = new Ccxt.bitmex();
 	let ccxt_markets;
+	debug("fetching market data");
 	while(!ccxt_markets){
 		try{
 			ccxt_markets = await ccxt.fetchMarkets();
 		}catch(e){
-
+			debug(e)
 		}
 		await sleep(3000);
 	}

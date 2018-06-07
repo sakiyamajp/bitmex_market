@@ -187,12 +187,16 @@ export default class Observer{
 			let since = await this._getFailSafeLastTime(model);
 			while(true){
 				this.debug(`fetching ${model.market.id} ${model.frame} from : ${new Date(since)}`);
-				let data = await model.fetch(since);
-				if(data.length < 499){
-					this.debug(`got all ${model.market.id} ${model.frame} histories`)
-					break;
+				try{
+					let data = await model.fetch(since);
+					if(data.length < 499){
+						this.debug(`got all ${model.market.id} ${model.frame} histories`)
+						break;
+					}
+					since = data[data.length - 1].time.getTime() + model.span;
+				}catch(e){
+					this.debug(e);
 				}
-				since = data[data.length - 1].time.getTime() + model.span;
 				await sleep(6000);
 			}
 			resolve();

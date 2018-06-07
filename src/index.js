@@ -149,13 +149,12 @@ export default async function(options){
 		connection,
 		frames,
 		config.markets);
-	for(let market in models){
-		models[market].depth = new Depth(market);
-	}
 	if(!options.subscribe){
+		for(let market in models){
+			models[market].depth = new Depth(market);
+		}
 		return pubsub(models,options);
 	}
-	debug("fetching market data");
 	let publishClient = redis.createClient(options.redis);
 	publishClient.on('error', function(e){
 //			debug(e);
@@ -173,6 +172,7 @@ export default async function(options){
 			publishClient,
 			socket);
 	for(let market in models){
+		models[market].depth = new Depth(market);
 		models[market].depth.socket(socket,publishClient);
 	}
 	models = pubsub(models,options);

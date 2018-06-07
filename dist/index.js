@@ -156,13 +156,12 @@ exports.default = async function (options) {
 		await sleep(3000);
 	}
 	let models = await createModels(ccxt, ccxt_markets, connection, frames, config.markets);
-	for (let market in models) {
-		models[market].depth = new _Depth2.default(market);
-	}
 	if (!options.subscribe) {
+		for (let market in models) {
+			models[market].depth = new _Depth2.default(market);
+		}
 		return pubsub(models, options);
 	}
-	debug("fetching market data");
 	let publishClient = redis.createClient(options.redis);
 	publishClient.on('error', function (e) {
 		//			debug(e);
@@ -174,6 +173,7 @@ exports.default = async function (options) {
 	socket.on('error', e => {});
 	await suscribeCandles(config, options, debug, models, publishClient, socket);
 	for (let market in models) {
+		models[market].depth = new _Depth2.default(market);
 		models[market].depth.socket(socket, publishClient);
 	}
 	models = pubsub(models, options);

@@ -12,51 +12,25 @@ var _ccxt = require('ccxt');
 
 var _ccxt2 = _interopRequireDefault(_ccxt);
 
-var _apiConnectors = require('../api-connectors/');
-
-var _apiConnectors2 = _interopRequireDefault(_apiConnectors);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var redis = require("redis");
-// https://github.com/ko0f/api-connectors.git
-
 let ccxt = new _ccxt2.default.bitmex();
 let sleep = ms => {
 	return new Promise(resolve => setTimeout(resolve, ms));
 };
 class Observer {
-	constructor(models, frames, optional_frames, history_start, polling, verbose, publisher) {
-		this.frames = frames;
+	constructor(models, bitmexTimeFrames, config, options, publisher, socket, debug) {
+		this.bitmexTimeFrames = bitmexTimeFrames;
 		this.models = models;
-		this.verbose = verbose;
-		this.debug = this.verbose ? console.info : () => {};
-		this.polling = polling;
+		this.config = config;
+		this.options = options;
+		this.debug = debug;
 		this.publisher = publisher;
-		this.history_start = history_start;
-		this.optional_frames = optional_frames;
-		this.socket = new _apiConnectors2.default({
-			testnet: false,
-			alwaysReconnect: true
-		});
-		this.socket.on('error', e => {});
-	}
-	async load() {
-		let promises = [];
-		for (let localName in this.frames) {
-			let proimse = this._loadHistorical(this.models[localName]);
-			promises.push(proimse);
-		}
-		await Promise.all(promises);
-		for (let optional in this.optional_frames) {
-			await (0, _Converter2.default)(this.models, this.models[optional]);
-		}
-		for (let frame in this.models) {
-			this._triggerUpdate(this.models[frame]);
-		}
-	}
-	async subscribe() {
-		for (let localName in this.frames) {
+		this.socket = socket;
+		this.start = null;
+		this.distinations = {};
+		for (let localName in this.bitmexTimeFrames) {
 			let model = this.models[localName];
 			let distination = [];
 			for (let property in this.models) {
@@ -64,8 +38,76 @@ class Observer {
 					distination.push(this.models[property]);
 				}
 			}
-			this._polling(model, distination);
-			this._connectSocket(model, distination);
+			this.distinations[localName] = distination;
+		}
+	}
+	async load() {
+		this.start = await this._detectStartDate();
+		await this._checkLost();
+		let promises = [];
+		for (let localName in this.bitmexTimeFrames) {
+			let proimse = this._fetchHistorical(this.models[localName]);
+			promises.push(proimse);
+		}
+		await Promise.all(promises);
+		for (let optional in this.config.timeframes) {
+			if (this.bitmexTimeFrames[optional]) {
+				continue;
+			}
+			await (0, _Converter2.default)(this.models, this.models[optional]);
+		}
+		for (let frame in this.models) {
+			this._triggerUpdate(this.models[frame]);
+		}
+		return this.start;
+	}
+	async _checkLost() {
+		for (let timeframe in this.models) {
+			let model = this.models[timeframe];
+			while (true) {
+				let result = await model.test();
+				if (result !== false) {
+					break;
+				}
+				let time = await model.findLost();
+				if (time) {
+					await model.fetch(time);
+				}
+				await sleep(3000);
+			}
+		}
+	}
+	async _detectStartDate() {
+		let histories = this.config.detected_histories;
+		let model = this.models.d1;
+		if (histories && histories[model.market.id]) {
+			return histories[model.market.id];
+		}
+		return await this._detectHistoryDate(model);
+	}
+	async _detectHistoryDate(model) {
+		let since = this.config.history.getTime();
+		let start;
+		while (true) {
+			let data = await model.fetch(since);
+			if (data.length) {
+				start = data[0].time;
+				break;
+			}
+			await sleep(3000);
+		}
+		return start;
+	}
+	subscribeRest() {
+		for (let localName in this.bitmexTimeFrames) {
+			let model = this.models[localName];
+			this._polling(model, this.distinations[localName]);
+		}
+	}
+	subscribeSocket() {
+		for (let localName in this.bitmexTimeFrames) {
+			let model = this.models[localName];
+			this._connectSocket(model, this.distinations[localName]);
 		}
 	}
 	async _convertDistination(distination) {
@@ -99,6 +141,8 @@ class Observer {
 	}
 	async _needFetch(model) {
 		let now = new Date().getTime();
+		// huge bitmex delay
+		now -= 15000;
 		let mustHave = now - now % model.span - model.span;
 		let last = await model.last();
 		let test = await model.test();
@@ -109,6 +153,7 @@ class Observer {
 			let needFetch = await this._needFetch(model);
 			if (needFetch) {
 				let since = await this._getFailSafeLastTime(model);
+				this.debug(`fetching ${model.summary()} from ${new Date(since)}`);
 				try {
 					await model.fetch(since, async d => {
 						this._triggerUpdate(model);
@@ -116,18 +161,21 @@ class Observer {
 					});
 				} catch (e) {}
 			}
-			await sleep(this.polling);
+			await sleep(this.options.polling);
 		}
 	}
 	async _getFailSafeLastTime(model) {
-		let since = new Date(this.history_start).getTime();
+		let since = this.start.getTime();
 		let last = await model.last();
 		if (last) {
-			since = last.time.getTime() - model.span * 300;
+			let failSafe = last.time.getTime() - model.span * 60;
+			if (since < failSafe) {
+				since = failSafe;
+			}
 		}
 		return since;
 	}
-	_loadHistorical(model) {
+	_fetchHistorical(model) {
 		return new Promise(async resolve => {
 			let needFetch = await this._needFetch(model);
 			if (!needFetch) {
@@ -135,19 +183,14 @@ class Observer {
 			}
 			let since = await this._getFailSafeLastTime(model);
 			while (true) {
-				this.debug(`getting historical ${model.market.id}${model.frame} data from timestamp : ${new Date(since)}`);
+				this.debug(`fetching ${model.market.id} ${model.frame} from : ${new Date(since)}`);
 				let data = await model.fetch(since);
-				needFetch = await this._needFetch(model);
-				if (!needFetch && data.length < 499) {
+				if (data.length < 499) {
 					this.debug(`got all ${model.market.id} ${model.frame} histories`);
 					break;
 				}
-				if (data.length) {
-					since = data[data.length - 1].time.getTime() + model.span;
-				} else {
-					since += model.span * 499;
-				}
-				await sleep(10000);
+				since = data[data.length - 1].time.getTime() + model.span;
+				await sleep(6000);
 			}
 			resolve();
 		});

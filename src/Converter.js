@@ -7,7 +7,7 @@ export default async function Converter(candles,target){
 			break;
 		}
 	}
-	let first = await base.first();
+	var first = await base.first();
 	let start = first.time.getTime();
 	let candleCount = target.span / base.span;
 

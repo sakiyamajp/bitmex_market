@@ -4,6 +4,7 @@ export default function Config(){
 		timeframes : mongoose.Schema.Types.Mixed,
 		history : Date,
 		markets : mongoose.Schema.Types.Mixed,
+		histories : mongoose.Schema.Types.Mixed,
 	});
 
 	configSchema.statics.load = function(){

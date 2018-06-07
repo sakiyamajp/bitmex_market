@@ -6,6 +6,8 @@ import Config from './Config';
 import Observer from './Observer';
 import Ccxt from 'ccxt';
 import extend from 'extend';
+//https://github.com/ko0f/api-connectors.git
+import BitMEXClient from '../api-connectors/';
 var redis = require("redis");
 
 let defaultOptions = {
@@ -14,6 +16,7 @@ let defaultOptions = {
 	timeframes : {},
 	markets : ['XBTUSD'],
 	verbose : true,
+	history : "2018-04-01Z",
 	subscribe : false,
 };
 let bitmexTimeFrames = {
@@ -53,13 +56,13 @@ export default async function(options){
 	let connection = mongoose.createConnection(options.mongo);
 	let configModel = connection.model("config",Config());
 	if(options.subscribe){
-		var config = extend({},defaultOptions,options);
-		var frames = extend({},options.timeframes,bitmexTimeFrames);
-		/*await*/ configModel.save(frames,options.history,options.markets);
-	}else{
-		var config = await configModel.load();
-		var frames = config.timeframes;
+		options = extend({},defaultOptions,options);
+		let  allTimeFrames = extend({},options.timeframes,bitmexTimeFrames);
+		await configModel.save(allTimeFrames,options.history,options.markets);
 	}
+	let config = await configModel.load();
+	let frames = config.timeframes;
+	let debug = options.verbose ? console.info : () => {};
 	let ccxt = new Ccxt.bitmex();
 	let ccxt_markets;
 	while(!ccxt_markets){
@@ -72,7 +75,7 @@ export default async function(options){
 	}
 	var redisClient = redis.createClient(options.redis);
 	redisClient.on('error', function(e){
-//		console.log(e);
+//		debug(e);
 	});
 	let models = await createModels(
 		ccxt,
@@ -94,34 +97,46 @@ export default async function(options){
 		}
 	}
 	redisClient.on("message", function(channel, d) {
-		if(callbacks[channel] && callbacks[channel].length){
-			for(let next of callbacks[channel]){
-				let match = channel.match(/^([^_]*)_([^_]*)$/);
-				next(JSON.parse(d),match[1],match[2]);
-			}
+		if(!callbacks[channel] || !callbacks[channel].length){
+			return;
+		}
+		let match = channel.match(/^([^_]*)_([^_]*)$/);
+		for(let next of callbacks[channel]){
+			next(JSON.parse(d),match[1],match[2]);
 		}
 	});
 	if(options.subscribe){
 		let observers = [];
 		let publishClient = redis.createClient(options.redis);
 		publishClient.on('error', function(e){
-//			console.log(e);
+//			debug(e);
 		});
+		let socket = new BitMEXClient({
+			testnet: false,
+			alwaysReconnect : true,
+		});
+		socket.on('error', (e) => {});
 		for(let market in models){
 			let observer = new Observer(
 					models[market],
 					bitmexTimeFrames,
-					config.timeframes,
-					config.history,
-					config.polling,
-					config.verbose,
-					publishClient);
-			await observer.load();
+					config,
+					options,
+					publishClient,
+					socket,
+					debug);
+			let start = await observer.load();
+			if(!config.histories){
+				config.histories = {};
+			}
+			config.histories[market] = start;
+			observer.subscribeRest();
 			observers.push(observer);
 			await sleep(8000);
 		}
+		await config.save();
 		for(let observer of observers){
-			await observer.subscribe();
+			observer.subscribeSocket();
 		}
 	}
 	return models;

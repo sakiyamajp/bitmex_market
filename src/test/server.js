@@ -37,7 +37,7 @@ import Markets from '../index';
 		},
 		// getting historical data form below
 		// Z make this utc
-		history : "2018-04-01T00:00:00.000Z",
+		history : "2018-04-01Z",
 //		polling : 20000 // ms default 20000,
 //		verbose : true // default true
 	});
@@ -53,5 +53,5 @@ import Markets from '../index';
 	console.log(candles)
 
 	candles = await markets.XBTUSD.d1.load(2,new Date('2018/05/01Z'));
-console.log(candles)
+	console.log(candles)
 })();

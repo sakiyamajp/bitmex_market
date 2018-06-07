@@ -15,7 +15,8 @@ function Config() {
 	var configSchema = new _mongoose2.default.Schema({
 		timeframes: _mongoose2.default.Schema.Types.Mixed,
 		history: Date,
-		markets: _mongoose2.default.Schema.Types.Mixed
+		markets: _mongoose2.default.Schema.Types.Mixed,
+		histories: _mongoose2.default.Schema.Types.Mixed
 	});
 
 	configSchema.statics.load = function () {

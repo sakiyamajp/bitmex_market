@@ -30,9 +30,15 @@ var _extend = require('extend');
 
 var _extend2 = _interopRequireDefault(_extend);
 
+var _apiConnectors = require('../api-connectors/');
+
+var _apiConnectors2 = _interopRequireDefault(_apiConnectors);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var redis = require("redis");
+//https://github.com/ko0f/api-connectors.git
+
 
 let defaultOptions = {
 	polling: 20000,
@@ -40,6 +46,7 @@ let defaultOptions = {
 	timeframes: {},
 	markets: ['XBTUSD'],
 	verbose: true,
+	history: "2018-04-01Z",
 	subscribe: false
 };
 let bitmexTimeFrames = {
@@ -71,13 +78,13 @@ exports.default = async function (options) {
 	let connection = _mongoose2.default.createConnection(options.mongo);
 	let configModel = connection.model("config", (0, _Config2.default)());
 	if (options.subscribe) {
-		var config = (0, _extend2.default)({}, defaultOptions, options);
-		var frames = (0, _extend2.default)({}, options.timeframes, bitmexTimeFrames);
-		/*await*/configModel.save(frames, options.history, options.markets);
-	} else {
-		var config = await configModel.load();
-		var frames = config.timeframes;
+		options = (0, _extend2.default)({}, defaultOptions, options);
+		let allTimeFrames = (0, _extend2.default)({}, options.timeframes, bitmexTimeFrames);
+		await configModel.save(allTimeFrames, options.history, options.markets);
 	}
+	let config = await configModel.load();
+	let frames = config.timeframes;
+	let debug = options.verbose ? console.info : () => {};
 	let ccxt = new _ccxt2.default.bitmex();
 	let ccxt_markets;
 	while (!ccxt_markets) {
@@ -88,7 +95,7 @@ exports.default = async function (options) {
 	}
 	var redisClient = redis.createClient(options.redis);
 	redisClient.on('error', function (e) {
-		//		console.log(e);
+		//		debug(e);
 	});
 	let models = await createModels(ccxt, ccxt_markets, connection, frames, config.markets);
 	let callbacks = {};
@@ -105,27 +112,39 @@ exports.default = async function (options) {
 		}
 	}
 	redisClient.on("message", function (channel, d) {
-		if (callbacks[channel] && callbacks[channel].length) {
-			for (let next of callbacks[channel]) {
-				let match = channel.match(/^([^_]*)_([^_]*)$/);
-				next(JSON.parse(d), match[1], match[2]);
-			}
+		if (!callbacks[channel] || !callbacks[channel].length) {
+			return;
+		}
+		let match = channel.match(/^([^_]*)_([^_]*)$/);
+		for (let next of callbacks[channel]) {
+			next(JSON.parse(d), match[1], match[2]);
 		}
 	});
 	if (options.subscribe) {
 		let observers = [];
 		let publishClient = redis.createClient(options.redis);
 		publishClient.on('error', function (e) {
-			//			console.log(e);
+			//			debug(e);
 		});
+		let socket = new _apiConnectors2.default({
+			testnet: false,
+			alwaysReconnect: true
+		});
+		socket.on('error', e => {});
 		for (let market in models) {
-			let observer = new _Observer2.default(models[market], bitmexTimeFrames, config.timeframes, config.history, config.polling, config.verbose, publishClient);
-			await observer.load();
+			let observer = new _Observer2.default(models[market], bitmexTimeFrames, config, options, publishClient, socket, debug);
+			let start = await observer.load();
+			if (!config.histories) {
+				config.histories = {};
+			}
+			config.histories[market] = start;
+			observer.subscribeRest();
 			observers.push(observer);
 			await sleep(8000);
 		}
+		await config.save();
 		for (let observer of observers) {
-			await observer.subscribe();
+			observer.subscribeSocket();
 		}
 	}
 	return models;

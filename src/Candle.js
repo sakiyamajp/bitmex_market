@@ -66,6 +66,9 @@ export default function Candle(
 			}
 		}).exec();
 	};
+	candleSchema.statics.summary = function(){
+		return `${this.market.id} ${this.frame}`;
+	}
 	candleSchema.statics.upsertIfNew = function(d,ifnew){
 		if(d._id){
 			delete d._id;
@@ -133,20 +136,77 @@ export default function Candle(
 		delete result.timestamp;
 		return result;
 	};
+	candleSchema.statics.testFromDate = async function(first,last){
+		let count = (last.getTime() - first.getTime()) / this.span;
+		count++;
+		let d = await this.count({
+			time : {
+				$gte : first,
+				$lte : last,
+			}
+		}).exec();
+		let result = (d == count);
+		if(!result){
+			console.info(`${this.summary()} lost ${count - d} candles between ${first} ~ ${last}`);
+		}
+		return result;
+	};
 	candleSchema.statics.test = async function(){
 		let first = await this.first();
 		let last = await this.last();
 		if(!first || !last){
-			return false;
+			return null;
 		}
-		let count = last.time.getTime() - first.time.getTime();
-		count /= this.span;
-		count++;
-		let d = await this.count({}).exec();
-		if(d != count){
-			console.info(`${this.market.symbol} ${this.frame} check NG lost ${count - d} candles`);
+		return await this.testFromDate(first.time,last.time);
+	};
+	candleSchema.statics.findLost = async function(){
+		let first = await this.first();
+		first = first.time.getTime();
+		let last = await this.last();
+		last = last.time.getTime();
+		while(true){
+			if(first == last){
+				break;
+			}
+			let middle = first + this.span * 2000;
+			if(middle > last){
+				middle = last;
+			}
+			let count = await this.count({
+				time : {
+					$gte : first,
+					$lt : middle,
+				}
+			}).exec();
+			let mustHaveCount = (middle - first) / this.span;
+			if(count == mustHaveCount){
+				first = middle;
+				continue;
+			}
+			let data = await this.find({
+				time : {
+					$gte : first,
+					$lt : middle,
+				}
+			},"time",{
+				sort : {
+					time : 1
+				}
+			}).exec();
+			for(let i=0 ; i<data.length; i++){
+				let next = data[i+1];
+				if(next){
+					next = next.time.getTime();
+				}else{
+					next = middle;
+				}
+				let now = data[i].time.getTime();
+				if(next - now != this.span){
+					return now + this.span;
+				}
+			}
 		}
-		return d == count;
+		return null;
 	};
 	candleSchema.methods.add = function(candle){
 		if(this.time >= candle.time){

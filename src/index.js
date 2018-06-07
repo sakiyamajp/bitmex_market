@@ -155,6 +155,7 @@ export default async function(options){
 	if(!options.subscribe){
 		return pubsub(models,options);
 	}
+	debug("fetching market data");
 	let publishClient = redis.createClient(options.redis);
 	publishClient.on('error', function(e){
 //			debug(e);
@@ -164,13 +165,13 @@ export default async function(options){
 		alwaysReconnect : true,
 	});
 	socket.on('error', (e) => {});
-//	await suscribeCandles(
-//			config,
-//			options,
-//			debug,
-//			models,
-//			publishClient,
-//			socket);
+	await suscribeCandles(
+			config,
+			options,
+			debug,
+			models,
+			publishClient,
+			socket);
 	for(let market in models){
 		models[market].depth.socket(socket,publishClient);
 	}

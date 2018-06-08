@@ -141,7 +141,7 @@ class Observer {
 	}
 	async _needFetch(model) {
 		let now = new Date().getTime();
-		// huge bitmex delay
+
 		now -= 15000;
 		let mustHave = now - now % model.span - model.span;
 		let last = await model.last();

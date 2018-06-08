@@ -45,7 +45,6 @@ function findBaseMs(ms) {
 }
 function Candle(ccxt, ccxt_market, frame, ms) {
 	var candleSchema = new _mongoose2.default.Schema({
-		// 開始時間 open time
 		time: {
 			type: Date,
 			unique: true
@@ -119,7 +118,7 @@ function Candle(ccxt, ccxt_market, frame, ms) {
 			}
 		}).exec();
 	};
-	// (d) => {}でやるとthis scopeがおかしなる
+
 	candleSchema.statics.parseCcxt = function (d) {
 		return new this({
 			time: d[0],

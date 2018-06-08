@@ -29,15 +29,12 @@ exports.default = async function Converter(candles, target) {
 	while (true) {
 		let result = await candleEach(searchStart, base, target, candleCount);
 		if (!result) {
-			//			console.log(target.frame,"converted to",new Date(searchStart))
 			break;
 		}
 		created = true;
 		searchStart += target.span;
 		count++;
-		if (count % 1000 == 0) {
-			//			console.log(target.frame,count,"converted and saved");
-		}
+		if (count % 1000 == 0) {}
 	}
 	return created;
 };

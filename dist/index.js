@@ -41,8 +41,6 @@ var _apiConnectors2 = _interopRequireDefault(_apiConnectors);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var redis = require("redis");
-//https://github.com/ko0f/api-connectors.git
-
 
 let defaultOptions = {
 	polling: 20000,
@@ -97,9 +95,7 @@ async function suscribeCandles(config, options, debug, models, publishClient, so
 }
 function pubsub(models, options) {
 	var redisClient = redis.createClient(options.redis);
-	redisClient.on('error', function (e) {
-		//		debug(e);
-	});
+	redisClient.on('error', function (e) {});
 	let callbacks = {};
 	for (let market in models) {
 		for (let property in models[market]) {
@@ -163,12 +159,11 @@ exports.default = async function (options) {
 		return pubsub(models, options);
 	}
 	let publishClient = redis.createClient(options.redis);
-	publishClient.on('error', function (e) {
-		//			debug(e);
-	});
+	publishClient.on('error', function (e) {});
 	let socket = new _apiConnectors2.default({
 		testnet: false,
-		alwaysReconnect: true
+		alwaysReconnect: true,
+		maxTableLen: 10
 	});
 	socket.on('error', e => {});
 	await suscribeCandles(config, options, debug, models, publishClient, socket);

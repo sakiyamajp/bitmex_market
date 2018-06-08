@@ -162,6 +162,7 @@ export default async function(options){
 	let socket = new BitMEXClient({
 		testnet: false,
 		alwaysReconnect : true,
+		maxTableLen: 10
 	});
 	socket.on('error', (e) => {});
 	await suscribeCandles(

@@ -69,9 +69,7 @@ class Observer {
 				if (result !== false) {
 					break;
 				}
-				this.debug("finding lost ones");
 				let time = await model.findLost();
-				this.debug(time, "lost");
 				if (time) {
 					await model.fetch(time);
 				}

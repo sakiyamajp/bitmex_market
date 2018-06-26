@@ -167,7 +167,7 @@ function Candle(ccxt, ccxt_market, frame, ms) {
 			if (first == last) {
 				break;
 			}
-			let middle = first + this.span * 2000;
+			let middle = first + this.span * 20000;
 			if (middle > last) {
 				middle = last;
 			}

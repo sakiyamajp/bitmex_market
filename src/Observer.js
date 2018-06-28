@@ -143,7 +143,8 @@ export default class Observer{
 	async _needFetch(model){
 		let now = new Date().getTime();
 		// huge bitmex delay
-		now -= 15000;
+		// https://stackoverflow.com/questions/31962539/duplicate-key-error-on-upsert-with-multi-processesmongo-3-0-4-wiredtiger
+		now -= 20000;
 		let mustHave = now - (now % model.span) - model.span;
 		let last = await model.last();
 		let test = await model.test();

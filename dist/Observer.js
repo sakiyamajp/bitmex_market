@@ -142,7 +142,7 @@ class Observer {
 	async _needFetch(model) {
 		let now = new Date().getTime();
 
-		now -= 15000;
+		now -= 20000;
 		let mustHave = now - now % model.span - model.span;
 		let last = await model.last();
 		let test = await model.test();

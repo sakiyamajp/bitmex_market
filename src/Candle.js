@@ -73,18 +73,27 @@ export default function Candle(
 		if(d._id){
 			delete d._id;
 		}
-		this.findOneAndUpdate({
-			time : d.time
-		},d,{
-			upsert : true
-		},(e,old) => {
-			if(e){
-				throw e;
-			}
-			if(!old && ifnew){
-				ifnew(d);
-			}
-		});
+		let self = this;
+		function failSafeUpsert(){
+			self.findOneAndUpdate({
+				time : d.time
+			},d,{
+				upsert : true
+			},(e,old) => {
+				if(e){
+					throw e;
+				}
+				if(!old && ifnew){
+					ifnew(d);
+				}
+			});
+		}
+		// https://stackoverflow.com/questions/35609698/mongo-duplicate-key-error-on-upsert-or-save
+		try{
+			failSafeUpsert();
+		}catch(e){
+			failSafeUpsert();
+		}
 	}
 	candleSchema.statics.fetch = async function(since,ifnew){
 		let name = null;

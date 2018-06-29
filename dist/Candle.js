@@ -78,18 +78,27 @@ function Candle(ccxt, ccxt_market, frame, ms) {
 		if (d._id) {
 			delete d._id;
 		}
-		this.findOneAndUpdate({
-			time: d.time
-		}, d, {
-			upsert: true
-		}, (e, old) => {
-			if (e) {
-				throw e;
-			}
-			if (!old && ifnew) {
-				ifnew(d);
-			}
-		});
+		let self = this;
+		function failSafeUpsert() {
+			self.findOneAndUpdate({
+				time: d.time
+			}, d, {
+				upsert: true
+			}, (e, old) => {
+				if (e) {
+					throw e;
+				}
+				if (!old && ifnew) {
+					ifnew(d);
+				}
+			});
+		}
+
+		try {
+			failSafeUpsert();
+		} catch (e) {
+			failSafeUpsert();
+		}
 	};
 	candleSchema.statics.fetch = async function (since, ifnew) {
 		let name = null;

@@ -18,7 +18,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 			password: "test_redis_password"
 		},
 
-		markets: ['XBTUSD', 'XRPM18'],
+		markets: ['XBTUSD'],
 
 		timeframes: {
 			"m2": 2 * 60 * 1000,
@@ -32,14 +32,14 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 		history: "2018-04-01Z"
 	});
 
-	markets.XRPM18.m1.on((candle, market, timeframe) => {
+	markets.XBTUSD.m1.on((candle, market, timeframe) => {
 		console.log(candle, market, timeframe);
 	});
 	markets.XBTUSD.d1.on((candle, market, timeframe) => {
 		console.log(candle, market, timeframe);
 	});
 	markets.XBTUSD.depth.on(d => {});
-	let candles = await markets.XRPM18.m1.load(3);
+	let candles = await markets.XBTUSD.m1.load(3);
 	console.log(candles);
 
 	candles = await markets.XBTUSD.d1.load(2, new Date('2018/05/01Z'));

@@ -15,18 +15,18 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 			password: "test_redis_password"
 		}
 	});
-	let xrp = markets.XRPM18;
-	xrp.m1.on((candle, market, timeframe) => {
+	let btc = markets.XBTUSD;
+	btc.m1.on((candle, market, timeframe) => {
 		console.log(candle, market, timeframe);
 	});
-	xrp.m2.on(candle => {
+	btc.m2.on(candle => {
 		console.log(candle);
 	});
-	xrp.depth.on(d => {});
+	btc.depth.on(d => {});
 	markets.XBTUSD.m1.on((candle, market, timeframe) => {
 		console.log(candle, market, timeframe);
 	});
 
-	let candles = await xrp.m1.load(3);
+	let candles = await btc.m1.load(3);
 	console.log(candles);
 })();

@@ -16,11 +16,6 @@ import Markets from '../index';
 		// default : ['XBTUSD']
 		markets : [
 			'XBTUSD',
-	//		'BCHM18',
-	//		'ETHM18',
-	//		'LTCM18',
-	//		'ADAM18',
-			'XRPM18'
 		],
 		// optional time frames
 		// m1,m5,h1,d1 are bitmex default time frames
@@ -42,7 +37,7 @@ import Markets from '../index';
 //		verbose : true // default true
 	});
 
-	markets.XRPM18.m1.on((candle,market,timeframe) => {
+	markets.XBTUSD.m1.on((candle,market,timeframe) => {
 		console.log(candle,market,timeframe);
 	});
 	markets.XBTUSD.d1.on((candle,market,timeframe) => {
@@ -51,7 +46,7 @@ import Markets from '../index';
 	markets.XBTUSD.depth.on((d) => {
 //		console.log(d);
 	})
-	let candles = await markets.XRPM18.m1.load(3);
+	let candles = await markets.XBTUSD.m1.load(3);
 	console.log(candles)
 
 	candles = await markets.XBTUSD.d1.load(2,new Date('2018/05/01Z'));

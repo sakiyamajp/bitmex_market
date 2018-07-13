@@ -48,14 +48,11 @@ let defaultOptions = {
 	timeframes: {},
 	markets: ['XBTUSD'],
 	verbose: true,
-	history: "2018-04-01Z",
+	history: "2018-07-01Z",
 	subscribe: false
 };
 let bitmexTimeFrames = {
-	"m1": 1 * 60 * 1000,
-	"m5": 5 * 60 * 1000,
-	"h1": 60 * 60 * 1000,
-	"d1": 24 * 60 * 60 * 1000
+	"h1": 60 * 60 * 1000
 };
 let sleep = ms => {
 	return new Promise(resolve => setTimeout(resolve, ms));
@@ -75,10 +72,10 @@ async function createModels(ccxt, ccxt_markets, connection, frames, markets) {
 	}
 	return result;
 }
-async function suscribeCandles(config, options, debug, models, publishClient, socket) {
+async function suscribeCandles(config, options, debug, models, socket) {
 	let observers = [];
 	for (let market in models) {
-		let observer = new _Observer2.default(models[market], bitmexTimeFrames, config, options, publishClient, socket, debug);
+		let observer = new _Observer2.default(models[market], bitmexTimeFrames, config, options, null, socket, debug);
 		let start = await observer.load();
 		if (!config.histories) {
 			config.histories = {};
@@ -94,8 +91,6 @@ async function suscribeCandles(config, options, debug, models, publishClient, so
 	}
 }
 function pubsub(models, options) {
-	var redisClient = redis.createClient(options.redis);
-	redisClient.on('error', function (e) {});
 	let callbacks = {};
 	for (let market in models) {
 		for (let property in models[market]) {
@@ -105,26 +100,9 @@ function pubsub(models, options) {
 					callbacks[channel] = [];
 				}
 				callbacks[channel].push(next);
-				redisClient.subscribe(channel);
 			};
 		}
 	}
-	redisClient.on("message", function (channel, d) {
-		if (!callbacks[channel] || !callbacks[channel].length) {
-			return;
-		}
-		d = JSON.parse(d);
-		let match = channel.match(/^([^_]*)_([^_]*)$/);
-		let market = match[1];
-		let property = match[2];
-		if (property == 'depth') {
-			d.time = new Date(d.time);
-			models[market].depth.update(d);
-		}
-		for (let next of callbacks[channel]) {
-			next(d, market, property);
-		}
-	});
 	return models;
 }
 
@@ -158,18 +136,15 @@ exports.default = async function (options) {
 		}
 		return pubsub(models, options);
 	}
-	let publishClient = redis.createClient(options.redis);
-	publishClient.on('error', function (e) {});
 	let socket = new _apiConnectors2.default({
 		testnet: false,
 		alwaysReconnect: true,
 		maxTableLen: 10
 	});
 	socket.on('error', e => {});
-	await suscribeCandles(config, options, debug, models, publishClient, socket);
+	await suscribeCandles(config, options, debug, models, socket);
 	for (let market in models) {
 		models[market].depth = new _Depth2.default(market);
-		models[market].depth.socket(socket, publishClient);
 	}
 	models = pubsub(models, options);
 	return models;

@@ -1,10 +1,10 @@
 "use strict";
 import mongoose from 'mongoose'
 let bitmexTimeFrames = {
-	"1m" : 1 * 60 * 1000,
-	"5m" : 5 * 60 * 1000,
+//	"1m" : 1 * 60 * 1000,
+//	"5m" : 5 * 60 * 1000,
 	"1h" : 60 * 60 * 1000,
-	"1d" : 24 * 60 * 60 * 1000,
+//	"1d" : 24 * 60 * 60 * 1000,
 };
 function findBaseMs(ms){
 	let found = false;

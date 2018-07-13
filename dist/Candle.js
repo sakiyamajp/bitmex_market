@@ -12,10 +12,7 @@ var _mongoose2 = _interopRequireDefault(_mongoose);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 let bitmexTimeFrames = {
-	"1m": 1 * 60 * 1000,
-	"5m": 5 * 60 * 1000,
-	"1h": 60 * 60 * 1000,
-	"1d": 24 * 60 * 60 * 1000
+	"1h": 60 * 60 * 1000
 };
 function findBaseMs(ms) {
 	let found = false;

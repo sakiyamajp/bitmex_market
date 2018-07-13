@@ -17,14 +17,14 @@ let defaultOptions = {
 	timeframes : {},
 	markets : ['XBTUSD'],
 	verbose : true,
-	history : "2018-04-01Z",
+	history : "2018-07-01Z",
 	subscribe : false,
 };
 let bitmexTimeFrames = {
-	"m1" : 1 * 60 * 1000,
-	"m5" : 5 * 60 * 1000,
+//	"m1" : 1 * 60 * 1000,
+//	"m5" : 5 * 60 * 1000,
 	"h1" : 60 * 60 * 1000,
-	"d1" : 24 * 60 * 60 * 1000,
+//	"d1" : 24 * 60 * 60 * 1000,
 };
 let sleep = (ms) => {
 	return new Promise(resolve => setTimeout(resolve, ms));
@@ -58,7 +58,6 @@ async function suscribeCandles(
 		options,
 		debug,
 		models,
-		publishClient,
 		socket){
 	let observers = [];
 	for(let market in models){
@@ -67,7 +66,7 @@ async function suscribeCandles(
 				bitmexTimeFrames,
 				config,
 				options,
-				publishClient,
+				null,
 				socket,
 				debug);
 		let start = await observer.load();
@@ -85,10 +84,6 @@ async function suscribeCandles(
 	}
 }
 function pubsub(models,options){
-	var redisClient = redis.createClient(options.redis);
-	redisClient.on('error', function(e){
-//		debug(e);
-	});
 	let callbacks = {};
 	for(let market in models){
 		for( let property in models[market]){
@@ -98,26 +93,9 @@ function pubsub(models,options){
 					callbacks[channel] = [];
 				}
 				callbacks[channel].push(next);
-				redisClient.subscribe(channel);
 			}
 		}
 	}
-	redisClient.on("message", function(channel, d) {
-		if(!callbacks[channel] || !callbacks[channel].length){
-			return;
-		}
-		d = JSON.parse(d);
-		let match = channel.match(/^([^_]*)_([^_]*)$/);
-		let market = match[1];
-		let property = match[2];
-		if(property == 'depth'){
-			d.time = new Date(d.time);
-			models[market].depth.update(d);
-		}
-		for(let next of callbacks[channel]){
-			next(d,market,property);
-		}
-	});
 	return models;
 }
 export default async function(options){
@@ -155,10 +133,6 @@ export default async function(options){
 		}
 		return pubsub(models,options);
 	}
-	let publishClient = redis.createClient(options.redis);
-	publishClient.on('error', function(e){
-//			debug(e);
-	});
 	let socket = new BitMEXClient({
 		testnet: false,
 		alwaysReconnect : true,
@@ -170,11 +144,9 @@ export default async function(options){
 			options,
 			debug,
 			models,
-			publishClient,
 			socket);
 	for(let market in models){
 		models[market].depth = new Depth(market);
-		models[market].depth.socket(socket,publishClient);
 	}
 	models = pubsub(models,options);
 	return models;

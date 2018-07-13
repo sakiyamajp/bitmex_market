@@ -79,7 +79,7 @@ class Observer {
 	}
 	async _detectStartDate() {
 		let histories = this.config.detected_histories;
-		let model = this.models.d1;
+		let model = this.models.h1;
 		if (histories && histories[model.market.id]) {
 			return histories[model.market.id];
 		}
@@ -201,7 +201,9 @@ class Observer {
 	}
 	async _triggerUpdate(model) {
 		let data = await model.last();
-		this.publisher.publish(model.channel, JSON.stringify(data));
+		if (this.publisher) {
+			this.publisher.publish(model.channel, JSON.stringify(data));
+		}
 	}
 }
 exports.default = Observer;

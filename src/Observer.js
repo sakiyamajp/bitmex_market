@@ -1,7 +1,6 @@
 "use strict";
 import Converter from './Converter';
 import Ccxt from 'ccxt';
-var redis = require("redis");
 let ccxt = new Ccxt.bitmex();
 let sleep = (ms) => {
 	return new Promise(resolve => setTimeout(resolve, ms));

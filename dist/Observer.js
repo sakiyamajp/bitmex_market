@@ -14,7 +14,6 @@ var _ccxt2 = _interopRequireDefault(_ccxt);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var redis = require("redis");
 let ccxt = new _ccxt2.default.bitmex();
 let sleep = ms => {
 	return new Promise(resolve => setTimeout(resolve, ms));

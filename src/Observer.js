@@ -66,6 +66,11 @@ export default class Observer{
 					break;
 				}
 				let time = await model.findLost();
+				if(model.baseMs){
+					// serverにはないやつ
+					console.log("lost",model.frame,time);
+					break;
+				}
 				if(time){
 					await model.fetch(time);
 				}

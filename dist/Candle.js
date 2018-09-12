@@ -109,6 +109,9 @@ function Candle(ccxt, ccxt_market, frame, ms) {
 			name = property;
 			break;
 		}
+		if (!name) {
+			throw `bitmex dosen't have ${this.span} data`;
+		}
 		var data = await ccxt.fetchOHLCV(ccxt_market.symbol, name, since, 500, {
 			partial: false
 		});
@@ -155,7 +158,9 @@ function Candle(ccxt, ccxt_market, frame, ms) {
 		}).exec();
 		let result = d == count;
 		if (!result) {
-			console.info(`${this.summary()} lost ${count - d} candles between ${first} ~ ${last}`);
+			let diff = count - d;
+			let message = diff < 0 ? "duplicate" : "lost";
+			console.info(`${this.summary()} ${message} ${Math.abs(diff)} candles between ${first} ~ ${last}`);
 		}
 		return result;
 	};
@@ -167,7 +172,7 @@ function Candle(ccxt, ccxt_market, frame, ms) {
 		}
 		return await this.testFromDate(first.time, last.time);
 	};
-	candleSchema.statics.findLost = async function () {
+	candleSchema.statics.findError = async function () {
 		let first = await this.first();
 		first = first.time.getTime();
 		let last = await this.last();
@@ -210,7 +215,17 @@ function Candle(ccxt, ccxt_market, frame, ms) {
 				}
 				let now = data[i].time.getTime();
 				if (next - now != this.span) {
-					return now + this.span;
+					if (count - mustHaveCount > 0) {
+						return {
+							duplicate: true,
+							time: now
+						};
+					} else {
+						return {
+							lost: true,
+							time: now + this.span
+						};
+					}
 				}
 			}
 		}

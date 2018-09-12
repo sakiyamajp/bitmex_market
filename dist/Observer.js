@@ -69,13 +69,19 @@ class Observer {
 				if (result !== false) {
 					break;
 				}
-				let time = await model.findLost();
-				if (model.baseMs) {
-					console.log("lost", model.frame, time);
-					break;
-				}
-				if (time) {
-					await model.fetch(time);
+				let error = await model.findError();
+				if (error.lost) {
+					await model.fetch(error.time);
+				} else if (error.duplicate) {
+					let duplicates = await model.find({
+						time: error.time
+					}).exec();
+					duplicates.forEach(async (d, i) => {
+						if (i == 0) {
+							return;
+						}
+						await d.remove();
+					});
 				}
 				await sleep(3000);
 			}
@@ -130,6 +136,7 @@ class Observer {
 			'd1': 'tradeBin1d'
 		};
 		let tableName = tableNames[model.frame];
+		console.info("connecting socket", tableName);
 		this.socket.addStream(model.market.id, tableName, async (data, symbol, tableName) => {
 			if (!data.length) {
 				return;

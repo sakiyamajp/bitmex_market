@@ -130,7 +130,9 @@ function pubsub(models, options) {
 
 exports.default = async function (options) {
 	console.log("connecting mongo");
-	let connection = _mongoose2.default.createConnection(options.mongo);
+	let connection = _mongoose2.default.createConnection(options.mongo, {
+		useNewUrlParser: true
+	});
 	let configModel = connection.model("config", (0, _Config2.default)());
 	if (options.subscribe) {
 		options = (0, _extend2.default)({}, defaultOptions, options);

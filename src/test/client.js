@@ -19,7 +19,7 @@ import Markets from '../index';
 	btc.depth.on(d => {
 //		console.log(d);
 	})
-	markets.XBTUSD.m1.on((candle,market,timeframe) => {
+	markets.XBTUSD.m2.on((candle,market,timeframe) => {
 		console.log(candle,market,timeframe);
 	})
 

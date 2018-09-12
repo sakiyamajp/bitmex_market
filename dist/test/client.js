@@ -23,7 +23,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 		console.log(candle);
 	});
 	btc.depth.on(d => {});
-	markets.XBTUSD.m1.on((candle, market, timeframe) => {
+	markets.XBTUSD.m2.on((candle, market, timeframe) => {
 		console.log(candle, market, timeframe);
 	});
 

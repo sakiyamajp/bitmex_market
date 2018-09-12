@@ -40,11 +40,12 @@ var _apiConnectors2 = _interopRequireDefault(_apiConnectors);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var redis = require("redis");
+var redis = null;
 
 let defaultOptions = {
 	polling: 20000,
-	redis: {},
+	redis: null,
+	bitmexTimeFrames: ["m1", "m5", "h1", "d1"],
 	timeframes: {},
 	markets: ['XBTUSD'],
 	verbose: true,
@@ -94,6 +95,9 @@ async function suscribeCandles(config, options, debug, models, publishClient, so
 	}
 }
 function pubsub(models, options) {
+	if (!redis) {
+		return models;
+	}
 	var redisClient = redis.createClient(options.redis);
 	redisClient.on('error', function (e) {});
 	let callbacks = {};
@@ -136,12 +140,24 @@ exports.default = async function (options) {
 	let configModel = connection.model("config", (0, _Config2.default)());
 	if (options.subscribe) {
 		options = (0, _extend2.default)({}, defaultOptions, options);
+		for (let frame in bitmexTimeFrames) {
+			if (options.bitmexTimeFrames.indexOf(frame) == -1) {
+				delete bitmexTimeFrames[frame];
+			}
+		}
 		let allTimeFrames = (0, _extend2.default)({}, options.timeframes, bitmexTimeFrames);
 		await configModel.save(allTimeFrames, options.history, options.markets);
 	}
+	let debug = options.verbose ? console.info : () => {};
 	let config = await configModel.load();
 	let frames = config.timeframes;
-	let debug = options.verbose ? console.info : () => {};
+
+	if (options.redis) {
+		redis = require("redis");
+	}
+	debug(options);
+	debug(config);
+
 	let ccxt = new _ccxt2.default.bitmex();
 	let ccxt_markets;
 	debug("fetching market data");
@@ -160,8 +176,13 @@ exports.default = async function (options) {
 		}
 		return pubsub(models, options);
 	}
-	let publishClient = redis.createClient(options.redis);
-	publishClient.on('error', function (e) {});
+	let publishClient = null;
+	if (redis) {
+		publishClient = redis.createClient(options.redis);
+		publishClient.on('error', function (e) {
+			debug(e);
+		});
+	}
 	let socket = new _apiConnectors2.default({
 		testnet: false,
 		alwaysReconnect: true,

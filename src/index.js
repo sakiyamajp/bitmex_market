@@ -9,11 +9,12 @@ import Ccxt from 'ccxt';
 import extend from 'extend';
 //https://github.com/ko0f/api-connectors.git
 import BitMEXClient from '../api-connectors/';
-var redis = require("redis");
+var redis = null;
 
 let defaultOptions = {
 	polling : 20000,
-	redis : {},
+	redis : null,
+	bitmexTimeFrames : ["m1","m5","h1","d1"],
 	timeframes : {},
 	markets : ['XBTUSD'],
 	verbose : true,
@@ -85,9 +86,12 @@ async function suscribeCandles(
 	}
 }
 function pubsub(models,options){
+	if(!redis){
+		return models;
+	}
 	var redisClient = redis.createClient(options.redis);
 	redisClient.on('error', function(e){
-//		debug(e);
+		// debug(e);
 	});
 	let callbacks = {};
 	for(let market in models){
@@ -128,12 +132,24 @@ export default async function(options){
 	let configModel = connection.model("config",Config());
 	if(options.subscribe){
 		options = extend({},defaultOptions,options);
+		for(let frame in bitmexTimeFrames){
+			if(options.bitmexTimeFrames.indexOf(frame) == -1){
+				delete bitmexTimeFrames[frame]
+			}
+		}
 		let  allTimeFrames = extend({},options.timeframes,bitmexTimeFrames);
 		await configModel.save(allTimeFrames,options.history,options.markets);
 	}
+	let debug = options.verbose ? console.info : () => {};
 	let config = await configModel.load();
 	let frames = config.timeframes;
-	let debug = options.verbose ? console.info : () => {};
+
+	if(options.redis){
+		redis = require("redis");
+	}
+	debug(options);
+	debug(config);
+
 	let ccxt = new Ccxt.bitmex();
 	let ccxt_markets;
 	debug("fetching market data");
@@ -157,10 +173,13 @@ export default async function(options){
 		}
 		return pubsub(models,options);
 	}
-	let publishClient = redis.createClient(options.redis);
-	publishClient.on('error', function(e){
-//			debug(e);
-	});
+	let publishClient = null;
+	if(redis){
+		publishClient = redis.createClient(options.redis);
+		publishClient.on('error', function(e){
+				debug(e);
+		});
+	}
 	let socket = new BitMEXClient({
 		testnet: false,
 		alwaysReconnect : true,

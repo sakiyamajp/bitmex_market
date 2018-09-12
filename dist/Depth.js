@@ -24,7 +24,9 @@ class Depth {
 			}
 			d = d[d.length - 1];
 			d = Depth.parse(d);
-			redis.publish(this.channel, JSON.stringify(d));
+			if (redis) {
+				redis.publish(this.channel, JSON.stringify(d));
+			}
 		});
 	}
 	update(d) {

@@ -14,7 +14,6 @@ var _ccxt2 = _interopRequireDefault(_ccxt);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var redis = require("redis");
 let ccxt = new _ccxt2.default.bitmex();
 let sleep = ms => {
 	return new Promise(resolve => setTimeout(resolve, ms));
@@ -89,7 +88,15 @@ class Observer {
 	}
 	async _detectStartDate() {
 		let histories = this.config.detected_histories;
-		let model = this.models.d1;
+		let largestFrame = null;
+		let largestName = null;
+		for (let name in this.bitmexTimeFrames) {
+			if (largestFrame == null || largestFrame < this.bitmexTimeFrames[name]) {
+				largestFrame = this.bitmexTimeFrames[name];
+				largestName = name;
+			}
+		}
+		let model = this.models[largestName];
 		if (histories && histories[model.market.id]) {
 			return histories[model.market.id];
 		}
@@ -136,7 +143,7 @@ class Observer {
 			'd1': 'tradeBin1d'
 		};
 		let tableName = tableNames[model.frame];
-		console.info("connecting socket", tableName);
+		this.debug("connecting socket", tableName);
 		this.socket.addStream(model.market.id, tableName, async (data, symbol, tableName) => {
 			if (!data.length) {
 				return;
@@ -212,7 +219,9 @@ class Observer {
 	}
 	async _triggerUpdate(model) {
 		let data = await model.last();
-		this.publisher.publish(model.channel, JSON.stringify(data));
+		if (this.publisher) {
+			this.publisher.publish(model.channel, JSON.stringify(data));
+		}
 	}
 }
 exports.default = Observer;

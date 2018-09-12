@@ -1,7 +1,6 @@
 "use strict";
 import Converter from './Converter';
 import Ccxt from 'ccxt';
-var redis = require("redis");
 let ccxt = new Ccxt.bitmex();
 let sleep = (ms) => {
 	return new Promise(resolve => setTimeout(resolve, ms));
@@ -85,7 +84,15 @@ export default class Observer{
 	}
 	async _detectStartDate(){
 		let histories = this.config.detected_histories;
-		let model = this.models.d1;
+		let largestFrame = null;
+		let largestName = null;
+		for(let name in this.bitmexTimeFrames){
+			if(largestFrame == null || largestFrame < this.bitmexTimeFrames[name]){
+				largestFrame = this.bitmexTimeFrames[name];
+				largestName = name;
+			}
+		}
+		let model = this.models[largestName];
 		if(histories && histories[model.market.id]){
 			return histories[model.market.id];
 		}
@@ -134,7 +141,7 @@ export default class Observer{
 			'd1' : 'tradeBin1d',
 		};
 		let tableName = tableNames[model.frame];
-		console.info("connecting socket",tableName);
+		this.debug("connecting socket",tableName);
 		this.socket.addStream(
 			model.market.id,
 			tableName,
@@ -216,6 +223,8 @@ export default class Observer{
 	}
 	async _triggerUpdate(model){
 		let data = await model.last();
-		this.publisher.publish(model.channel,JSON.stringify(data));
+		if(this.publisher){
+			this.publisher.publish(model.channel,JSON.stringify(data));
+		}
 	}
 }

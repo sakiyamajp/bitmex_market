@@ -4,8 +4,8 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "server": "nodemon --trace-warnings dist/test/server.js",
-    "client": "nodemon --trace-warnings dist/test/client.js"
+    "server": "nodemon --trace-warnings --no-deprecation dist/test/server.js",
+    "client": "nodemon --trace-warnings --no-deprecation dist/test/client.js"
   },
   "engines": {
     "node": "^8.9.4"

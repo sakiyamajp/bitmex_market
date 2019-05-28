@@ -157,7 +157,7 @@ function Candle(ccxt, ccxt_market, frame, ms) {
 			}
 		}).exec();
 		let result = d == count;
-		if (!result) {
+		if (result) {} else {
 			let diff = count - d;
 			let message = diff < 0 ? "duplicate" : "lost";
 			console.info(`${this.summary()} ${message} ${Math.abs(diff)} candles between ${first} ~ ${last}`);

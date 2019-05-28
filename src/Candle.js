@@ -158,7 +158,9 @@ export default function Candle(
 			}
 		}).exec();
 		let result = (d == count);
-		if(!result){
+		if(result){
+//			console.info(`${this.summary()} OK between ${first} ~ ${last}`);
+		}else{
 			let diff = count - d;
 			let message = diff < 0 ? "duplicate" : "lost";
 			console.info(`${this.summary()} ${message} ${Math.abs(diff)} candles between ${first} ~ ${last}`);
@@ -260,7 +262,7 @@ export default function Candle(
 				sort : {
 					time : -1
 				},
-				limit : limit
+				limit : limit-0
 			},(err,d)=>{
 				d = d.reverse();
 				resolve(d)

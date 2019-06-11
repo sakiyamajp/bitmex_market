@@ -157,7 +157,7 @@ class Observer {
 		let mustHave = now - now % model.span - model.span;
 		let last = await model.last();
 		let test = await model.test();
-		return !(test && last && last.time.getTime() == mustHave);
+		return !(test && last && last.time.getTime() >= mustHave);
 	}
 	async _polling(model, distination) {
 		while (true) {

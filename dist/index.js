@@ -41,7 +41,7 @@ var _apiConnectors2 = _interopRequireDefault(_apiConnectors);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var redis = require("redis");
-
+_mongoose2.default.set('useCreateIndex', true);
 let defaultOptions = {
 	polling: 20000,
 	redis: {},

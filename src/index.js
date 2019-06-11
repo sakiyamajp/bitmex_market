@@ -10,7 +10,7 @@ import extend from 'extend';
 //https://github.com/ko0f/api-connectors.git
 import BitMEXClient from '../api-connectors/';
 var redis = require("redis");
-
+mongoose.set('useCreateIndex', true);
 let defaultOptions = {
 	polling : 20000,
 	redis : {},

@@ -259,7 +259,7 @@ function Candle(ccxt, ccxt_market, frame, ms) {
 				sort: {
 					time: -1
 				},
-				limit: limit
+				limit: limit - 0
 			}, (err, d) => {
 				d = d.reverse();
 				resolve(d);

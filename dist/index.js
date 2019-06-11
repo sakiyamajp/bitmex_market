@@ -137,7 +137,7 @@ exports.default = async function (options) {
 	if (options.subscribe) {
 		options = (0, _extend2.default)({}, defaultOptions, options);
 		let allTimeFrames = (0, _extend2.default)({}, options.timeframes, bitmexTimeFrames);
-		await configModel.save(allTimeFrames, options.history, options.markets);
+		await configModel.setup(allTimeFrames, options.history, options.markets);
 	}
 	let config = await configModel.load();
 	let frames = config.timeframes;

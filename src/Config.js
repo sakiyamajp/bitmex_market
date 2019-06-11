@@ -12,7 +12,7 @@ export default function Config(){
 		},'',{
 		}).exec();
 	};
-	configSchema.statics.save = async function(timeframes,history,markets){
+	configSchema.statics.setup = async function(timeframes,history,markets){
 		let old = await this.load();
 		if(old){
 			old.timeframes = timeframes;

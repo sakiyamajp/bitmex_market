@@ -129,7 +129,7 @@ export default async function(options){
 	if(options.subscribe){
 		options = extend({},defaultOptions,options);
 		let  allTimeFrames = extend({},options.timeframes,bitmexTimeFrames);
-		await configModel.save(allTimeFrames,options.history,options.markets);
+		await configModel.setup(allTimeFrames,options.history,options.markets);
 	}
 	let config = await configModel.load();
 	let frames = config.timeframes;

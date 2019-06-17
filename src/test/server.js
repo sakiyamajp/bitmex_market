@@ -37,18 +37,23 @@ import Markets from '../index';
 //		verbose : true // default true
 	});
 
-	markets.XBTUSD.m1.on((candle,market,timeframe) => {
-		console.log(candle,market,timeframe);
-	});
-	markets.XBTUSD.d1.on((candle,market,timeframe) => {
-		console.log(candle,market,timeframe);
+//	markets.XBTUSD.m1.on((candle,market,timeframe) => {
+//		console.log(candle,market,timeframe);
+//	});
+//	markets.XBTUSD.d1.on((candle,market,timeframe) => {
+//		console.log(candle,market,timeframe);
+//	})
+//	markets.XBTUSD.depth.on((d) => {
+////		console.log(d);
+//	})
+//	let candles = await markets.XBTUSD.m1.load(3);
+//	console.log(candles)
+//
+//	candles = await markets.XBTUSD.d1.load(2,new Date('2018/05/01Z'));
+//	console.log(candles)
+	markets.XBTUSD.trade.on((ds,market) => {
+		for(let d of ds){
+//			console.log(d);
+		}
 	})
-	markets.XBTUSD.depth.on((d) => {
-//		console.log(d);
-	})
-	let candles = await markets.XBTUSD.m1.load(3);
-	console.log(candles)
-
-	candles = await markets.XBTUSD.d1.load(2,new Date('2018/05/01Z'));
-	console.log(candles)
 })();

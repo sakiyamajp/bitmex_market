@@ -32,16 +32,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 		history: "2018-04-01Z"
 	});
 
-	markets.XBTUSD.m1.on((candle, market, timeframe) => {
-		console.log(candle, market, timeframe);
+	markets.XBTUSD.trade.on((ds, market) => {
+		for (let d of ds) {}
 	});
-	markets.XBTUSD.d1.on((candle, market, timeframe) => {
-		console.log(candle, market, timeframe);
-	});
-	markets.XBTUSD.depth.on(d => {});
-	let candles = await markets.XBTUSD.m1.load(3);
-	console.log(candles);
-
-	candles = await markets.XBTUSD.d1.load(2, new Date('2018/05/01Z'));
-	console.log(candles);
 })();

@@ -3,6 +3,7 @@ import 'babel-polyfill';
 import mongoose from 'mongoose';
 import Candle from './Candle';
 import Depth from './Depth';
+import Trade from './Trade';
 import Config from './Config';
 import Observer from './Observer';
 import Ccxt from 'ccxt';
@@ -19,6 +20,7 @@ let defaultOptions = {
 	verbose : true,
 	history : "2018-04-01Z",
 	subscribe : false,
+	trade_history : 30000,
 };
 let bitmexTimeFrames = {
 	"m1" : 1 * 60 * 1000,
@@ -110,9 +112,12 @@ function pubsub(models,options){
 		let match = channel.match(/^([^_]*)_([^_]*)$/);
 		let market = match[1];
 		let property = match[2];
+		// ここでやらないと clientがみえない
 		if(property == 'depth'){
 			d.time = new Date(d.time);
 			models[market].depth.update(d);
+		}else if(property == 'trade'){
+			models[market].trade.update(d);
 		}
 		for(let next of callbacks[channel]){
 			next(d,market,property);
@@ -177,6 +182,8 @@ export default async function(options){
 	for(let market in models){
 		models[market].depth = new Depth(market);
 		models[market].depth.socket(socket,publishClient);
+		models[market].trade = new Trade(market,options.trade_history);
+		models[market].trade.socket(socket,publishClient,ccxt);
 	}
 	models = pubsub(models,options);
 	return models;

@@ -18,6 +18,10 @@ var _Depth = require('./Depth');
 
 var _Depth2 = _interopRequireDefault(_Depth);
 
+var _Trade = require('./Trade');
+
+var _Trade2 = _interopRequireDefault(_Trade);
+
 var _Config = require('./Config');
 
 var _Config2 = _interopRequireDefault(_Config);
@@ -49,7 +53,8 @@ let defaultOptions = {
 	markets: ['XBTUSD'],
 	verbose: true,
 	history: "2018-04-01Z",
-	subscribe: false
+	subscribe: false,
+	trade_history: 30000
 };
 let bitmexTimeFrames = {
 	"m1": 1 * 60 * 1000,
@@ -117,9 +122,12 @@ function pubsub(models, options) {
 		let match = channel.match(/^([^_]*)_([^_]*)$/);
 		let market = match[1];
 		let property = match[2];
+
 		if (property == 'depth') {
 			d.time = new Date(d.time);
 			models[market].depth.update(d);
+		} else if (property == 'trade') {
+			models[market].trade.update(d);
 		}
 		for (let next of callbacks[channel]) {
 			next(d, market, property);
@@ -172,6 +180,8 @@ exports.default = async function (options) {
 	for (let market in models) {
 		models[market].depth = new _Depth2.default(market);
 		models[market].depth.socket(socket, publishClient);
+		models[market].trade = new _Trade2.default(market, options.trade_history);
+		models[market].trade.socket(socket, publishClient, ccxt);
 	}
 	models = pubsub(models, options);
 	return models;

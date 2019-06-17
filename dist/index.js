@@ -165,6 +165,7 @@ exports.default = async function (options) {
 	if (!options.subscribe) {
 		for (let market in models) {
 			models[market].depth = new _Depth2.default(market);
+			models[market].trade = new _Trade2.default(market, options.trade_history);
 		}
 		return pubsub(models, options);
 	}
